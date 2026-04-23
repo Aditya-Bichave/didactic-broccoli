@@ -323,6 +323,14 @@ describe('PlayersHandler', () => {
 
             expect(handler.playersList[0].mounted).toBe(false);
         });
+
+        test('synthetic: local player mount state is synced when ids match', () => {
+            handler.setLocalPlayerId(1234);
+
+            handler.updatePlayerMounted(1234, true);
+
+            expect(handler.localPlayer.mounted).toBe(true);
+        });
     });
 
     // ---------------------------------------------------------------------------
@@ -412,6 +420,34 @@ describe('PlayersHandler', () => {
 
             expect(handler.localPlayer.posX).toBe(123.4);
             expect(handler.localPlayer.posY).toBe(567.8);
+        });
+    });
+
+    describe('updatePlayerPosition', () => {
+        test('synthetic: updates tracked player coordinates and touches entity', () => {
+            handler.handleNewPlayerEvent(7, {1: 'Scout', 8: '', 53: 0, 51: null, 40: [], 43: []});
+            const player = handler.playersList[0];
+            const before = player.lastUpdateTime;
+
+            handler.updatePlayerPosition(7, 11.5, -3.25);
+
+            expect(player.posX).toBe(11.5);
+            expect(player.posY).toBe(-3.25);
+            expect(player.oldPosX).toBe(0);
+            expect(player.oldPosY).toBe(0);
+            expect(player.lastUpdateTime).toBeGreaterThanOrEqual(before);
+        });
+
+        test('synthetic: updates local player coordinates when ids match', () => {
+            handler.setLocalPlayerId(99);
+            handler.updateLocalPlayerPosition(2, 3);
+
+            handler.updatePlayerPosition(99, 5, 8);
+
+            expect(handler.localPlayer.posX).toBe(5);
+            expect(handler.localPlayer.posY).toBe(8);
+            expect(handler.localPlayer.oldPosX).toBe(2);
+            expect(handler.localPlayer.oldPosY).toBe(3);
         });
     });
 

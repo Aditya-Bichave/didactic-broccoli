@@ -233,7 +233,7 @@ endif
 		$(DIST)/checksums-sha256.txt
 	@echo ""
 	@echo "Draft release created. Review and publish at:"
-	@echo "  https://github.com/Nouuu/Albion-Online-OpenRadar/releases"
+	@echo "  https://github.com/Aditya-Bichave/didactic-broccoli/releases"
 
 # ============================================================================
 # Utilities

@@ -9,9 +9,32 @@ import {CATEGORIES} from '../constants/LoggerConstants.js';
 const MAP_CHANGE_DEBOUNCE_MS = 4000;
 let lastMapChangeTime = 0;
 
-// Local player position (relative coords)
+// Local player position (relative coords).
+// lpX/lpY hold the LAST KNOWN move destination sniffed from Request_Move.
+// The character hasn't arrived there yet — getLocalPlayerPosition() extrapolates
+// the current position along the last move vector using an estimated speed.
 let lpX = 0.0;
 let lpY = 0.0;
+
+let moveTargetX = 0.0;
+let moveTargetY = 0.0;
+let hasMoveTarget = false;
+let hasAuthoritativeLocalMove = false;
+
+// Movement interpolation state. When a new Move request fires, we snapshot the
+// current interpolated position as the origin of the new leg, stash the
+// destination, and start the clock. Subsequent reads advance along the leg.
+let moveOriginX = 0.0;
+let moveOriginY = 0.0;
+let moveStartedAt = 0;
+let moveMountedAtStart = false;
+
+// Movement speed estimates in game units per second. Ground truth varies with
+// mount type, buffs, terrain; these are conservative averages that keep the
+// interpolated position slightly *behind* the true position rather than ahead
+// (better to under-extrapolate than click past the destination).
+const WALK_SPEED_GU_PER_SEC = 5.5;
+const MOUNT_SPEED_GU_PER_SEC = 9.5;
 
 // Expose globally for debug access
 window.lpX = lpX;
@@ -22,14 +45,91 @@ let handlers = null;
 let map = null;
 let radarRenderer = null;
 
-// Helper: Update local player position (DRY pattern)
-function updateLocalPlayerPosition(x, y) {
+// Helper: Update local player position (DRY pattern).
+// Called on every Request_Move sniff — the (x,y) passed in is the click
+// DESTINATION, not the character's current location. We snapshot the current
+// interpolated position as the new leg's origin before overwriting the
+// destination so interpolation stays continuous across chained move requests.
+function publishLocalPlayerPosition(x, y) {
     lpX = x;
     lpY = y;
     window.lpX = lpX;
     window.lpY = lpY;
     handlers?.playersHandler?.updateLocalPlayerPosition(lpX, lpY);
     radarRenderer?.setLocalPlayerPosition?.(lpX, lpY);
+    document.dispatchEvent(new CustomEvent('localPlayerPositionChanged', {
+        detail: {x: lpX, y: lpY}
+    }));
+}
+
+function rememberLocalPlayerMoveTarget(x, y) {
+    const now = Date.now();
+    const current = computeInterpolatedPosition(now);
+    moveOriginX = current.x;
+    moveOriginY = current.y;
+    moveStartedAt = now;
+    moveMountedAtStart = Boolean(handlers?.playersHandler?.localPlayer?.mounted);
+    moveTargetX = x;
+    moveTargetY = y;
+    hasMoveTarget = true;
+}
+
+function updateLocalPlayerPosition(x, y, {authoritativeMove = false} = {}) {
+    const now = Date.now();
+
+    if (authoritativeMove) {
+        hasAuthoritativeLocalMove = true;
+    }
+
+    if (hasMoveTarget) {
+        const remainingDistance = Math.hypot(moveTargetX - x, moveTargetY - y);
+        if (remainingDistance <= 0.35) {
+            hasMoveTarget = false;
+            moveStartedAt = 0;
+        } else {
+            moveOriginX = x;
+            moveOriginY = y;
+            moveStartedAt = now;
+            moveMountedAtStart = Boolean(handlers?.playersHandler?.localPlayer?.mounted);
+        }
+    } else {
+        moveOriginX = x;
+        moveOriginY = y;
+        moveStartedAt = 0;
+    }
+
+    publishLocalPlayerPosition(x, y);
+}
+
+function isLocalPlayerEntity(id) {
+    const localId = Number(handlers?.playersHandler?.localPlayer?.id);
+    return Number.isFinite(localId) && localId > 0 && Number(id) === localId;
+}
+
+// Estimate the character's *current* position along the most recent move leg.
+// Without this, callers see the last-known destination, which is usually where
+// the character is heading — not where it is — leading to bad distance
+// estimates for gather click projection.
+function computeInterpolatedPosition(now = Date.now()) {
+    if (hasAuthoritativeLocalMove || !hasMoveTarget || moveStartedAt === 0) {
+        return {x: lpX, y: lpY};
+    }
+    const dx = moveTargetX - moveOriginX;
+    const dy = moveTargetY - moveOriginY;
+    const total = Math.hypot(dx, dy);
+    if (total < 0.01) {
+        return {x: lpX, y: lpY};
+    }
+    const speed = moveMountedAtStart ? MOUNT_SPEED_GU_PER_SEC : WALK_SPEED_GU_PER_SEC;
+    const traveled = Math.max(0, (now - moveStartedAt) / 1000) * speed;
+    if (traveled >= total) {
+        return {x: moveTargetX, y: moveTargetY};
+    }
+    const t = traveled / total;
+    return {
+        x: moveOriginX + dx * t,
+        y: moveOriginY + dy * t
+    };
 }
 
 // Helper function to get event name (for debugging)
@@ -80,7 +180,7 @@ export function setMap(mapRef) {
 }
 
 export function getLocalPlayerPosition() {
-    return {x: lpX, y: lpY};
+    return computeInterpolatedPosition();
 }
 
 export function restoreMapFromSession() {
@@ -161,6 +261,15 @@ export function onEvent(Parameters) {
         case EventCodes.Move:
             const posX = Parameters[4];
             const posY = Parameters[5];
+            playersHandler.updatePlayerPosition?.(id, posX, posY);
+            if (isLocalPlayerEntity(id)) {
+                updateLocalPlayerPosition(posX, posY, {authoritativeMove: true});
+                window.logger?.debug(CATEGORIES.PLAYERS, 'LocalPlayerMoveEvent', {
+                    id,
+                    posX,
+                    posY
+                });
+            }
             mobsHandler.updateMistPosition(id, posX, posY);
             mobsHandler.updateMobPosition(id, posX, posY);
             break;
@@ -290,14 +399,17 @@ export function onRequest(Parameters) {
     // 22 = OperationCodes.Move. 21 = legacy pre-Protocol18 Move (upstream 21 is now GetShopTilesForCategory).
     if (Parameters[253] == 21 || Parameters[253] == OperationCodes.Move) {
         if (Array.isArray(Parameters[1]) && Parameters[1].length === 2) {
-            updateLocalPlayerPosition(Parameters[1][0], Parameters[1][1]);
-            window.logger?.debug(CATEGORIES.PLAYERS, 'Operation21_LocalPlayer', {lpX, lpY});
+            rememberLocalPlayerMoveTarget(Parameters[1][0], Parameters[1][1]);
+            window.logger?.debug(CATEGORIES.PLAYERS, 'Operation21_LocalPlayerTarget', {
+                targetX: Parameters[1][0],
+                targetY: Parameters[1][1]
+            });
         }
         // Legacy Buffer handling
         else if (Parameters[1] && Parameters[1].type === 'Buffer') {
             const uint8Array = new Uint8Array(Parameters[1].data);
             const dataView = new DataView(uint8Array.buffer);
-            updateLocalPlayerPosition(dataView.getFloat32(0, true), dataView.getFloat32(4, true));
+            rememberLocalPlayerMoveTarget(dataView.getFloat32(0, true), dataView.getFloat32(4, true));
         } else {
             window.logger?.error(CATEGORIES.PLAYERS, 'OnRequest_Move_UnknownFormat', {
                 param1: Parameters[1],
@@ -333,6 +445,13 @@ export function onResponse(Parameters, clearHandlersCallback) {
                 previousMapId,
                 newMapId: map.id
             });
+
+            document.dispatchEvent(new CustomEvent('radarMapChanged', {
+                detail: {
+                    previousMapId,
+                    mapId: map.id
+                }
+            }));
 
             clearHandlersCallback();
         }
@@ -370,6 +489,13 @@ export function onResponse(Parameters, clearHandlersCallback) {
             newMapId: map.id
         });
 
+        document.dispatchEvent(new CustomEvent('radarMapChanged', {
+            detail: {
+                previousMapId,
+                mapId: map.id
+            }
+        }));
+
         if (radarRenderer) {
             radarRenderer.setMap(map);
         }
@@ -389,6 +515,10 @@ export function onResponse(Parameters, clearHandlersCallback) {
     }
     // All data on the player joining the map (us)
     else if (Parameters[253] == OperationCodes.Join) {
+        if (Number.isFinite(Number(Parameters[0]))) {
+            handlers?.playersHandler?.setLocalPlayerId?.(Number(Parameters[0]));
+        }
+
         // Decode position from Buffer or Array
         if (Parameters[9] && Parameters[9].type === 'Buffer') {
             const uint8Array = new Uint8Array(Parameters[9].data);
@@ -428,6 +558,13 @@ export function onResponse(Parameters, clearHandlersCallback) {
                 previousMapId,
                 newMapId: map.id
             });
+
+            document.dispatchEvent(new CustomEvent('radarMapChanged', {
+                detail: {
+                    previousMapId,
+                    mapId: map.id
+                }
+            }));
         }
 
         clearHandlersCallback();
@@ -440,8 +577,16 @@ export function onResponse(Parameters, clearHandlersCallback) {
 export function reset() {
     lpX = 0.0;
     lpY = 0.0;
+    moveTargetX = 0.0;
+    moveTargetY = 0.0;
+    hasMoveTarget = false;
+    hasAuthoritativeLocalMove = false;
     window.lpX = 0;
     window.lpY = 0;
+    moveOriginX = 0.0;
+    moveOriginY = 0.0;
+    moveStartedAt = 0;
+    moveMountedAtStart = false;
     lastMapChangeTime = 0;
 
     // Clear references to prevent memory leaks

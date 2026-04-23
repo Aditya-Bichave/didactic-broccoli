@@ -9,13 +9,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Nouuu/Albion-Online-OpenRadar/releases">
-    <img src="https://img.shields.io/github/v/release/Nouuu/Albion-Online-OpenRadar?style=flat-square&label=Download&color=7c3aed" alt="Download">
+  <a href="https://github.com/Aditya-Bichave/didactic-broccoli/releases">
+    <img src="https://img.shields.io/github/v/release/Aditya-Bichave/didactic-broccoli?style=flat-square&label=Download&color=7c3aed" alt="Download">
   </a>
   <img src="https://img.shields.io/badge/Windows%20%7C%20Linux-blue?style=flat-square" alt="Platform">
   <img src="https://img.shields.io/badge/Go-1.26+-00ADD8?style=flat-square&logo=go&logoColor=white" alt="Go">
-  <a href="https://github.com/Nouuu/Albion-Online-OpenRadar/stargazers">
-    <img src="https://img.shields.io/github/stars/Nouuu/Albion-Online-OpenRadar?style=flat-square&color=yellow" alt="Stars">
+  <a href="https://github.com/Aditya-Bichave/didactic-broccoli/stargazers">
+    <img src="https://img.shields.io/github/stars/Aditya-Bichave/didactic-broccoli?style=flat-square&color=yellow" alt="Stars">
   </a>
 </p>
 
@@ -29,7 +29,7 @@
 >
 > Take care. ❤️
 >
-> -- Nouuu
+> -- Aditya-Bichave
 
 https://github.com/user-attachments/assets/33fe1ac7-11f2-4c3c-a91c-0ab42ebdda7d
 
@@ -49,7 +49,7 @@ reading.
 ### Windows
 
 1. Install **[Npcap](https://npcap.com/#download)** (required for packet capture)
-2. Download `OpenRadar-windows-amd64.exe` from [Releases](https://github.com/Nouuu/Albion-Online-OpenRadar/releases)
+2. Download `OpenRadar-windows-amd64.exe` from [Releases](https://github.com/Aditya-Bichave/didactic-broccoli/releases)
 3. Run it, pick your network adapter
 4. Open **http://localhost:5001** in your browser
 5. Launch Albion and start playing
@@ -247,7 +247,7 @@ The 84 MB localization file? Gone. Minified JSONs keep only what the radar needs
 ### Quick Start
 
 ```bash
-git clone https://github.com/Nouuu/Albion-Online-OpenRadar.git
+git clone https://github.com/Aditya-Bichave/didactic-broccoli.git
 cd Albion-Online-OpenRadar
 
 make run   # Run directly
@@ -303,13 +303,13 @@ make release-snapshot # Full release build (both platforms)
 
 ## Contributing
 
-Found a bug? Want to help? [Open an issue](https://github.com/Nouuu/Albion-Online-OpenRadar/issues) or submit a PR.
+Found a bug? Want to help? [Open an issue](https://github.com/Aditya-Bichave/didactic-broccoli/issues) or submit a PR.
 
 ---
 
 ## Credits
 
-Built by [@Nouuu](https://github.com/Nouuu)
+Built by [@Aditya-Bichave](https://github.com/Aditya-Bichave)
 
 Based on [ZQRadar](https://github.com/Zeldruck/Albion-Online-ZQRadar) by [@Zeldruck](https://github.com/Zeldruck)
 

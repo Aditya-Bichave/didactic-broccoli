@@ -5,6 +5,22 @@ import settingsSync from "./SettingsSync.js";
 const SCALE_FACTOR = 1.0;
 const BASE_ZOOM = 4;
 
+function isLivingResource(resource) {
+    const mobileTypeId = resource?.mobileTypeId;
+    return mobileTypeId !== null &&
+        mobileTypeId !== undefined &&
+        mobileTypeId !== 65535 &&
+        mobileTypeId !== -1;
+}
+
+function shouldSkipResourceForClusters(resource) {
+    if (!resource || resource.size === undefined) return false;
+    const size = Number(resource.size);
+    if (!Number.isFinite(size)) return false;
+    if (size < 0) return true;
+    return size === 0 && !isLivingResource(resource);
+}
+
 export class DrawingUtils {
     constructor() {
         this.fontSize = "12px";
@@ -433,14 +449,14 @@ export class DrawingUtils {
 
         for (let i = 0; i < resources.length; i++) {
             if (processed.has(i)) continue;
-            if (resources[i].size !== undefined && resources[i].size <= 0) continue;
+            if (shouldSkipResourceForClusters(resources[i])) continue;
             const resource = resources[i];
             const typeName = getTypeName(resource);
             const cluster = { x: resource.hX, y: resource.hY, count: 1, type: typeName, tier: resource.tier, resources: [resource] };
 
             for (let j = i + 1; j < resources.length; j++) {
                 if (processed.has(j)) continue;
-                if (resources[j].size !== undefined && resources[j].size <= 0) continue;
+                if (shouldSkipResourceForClusters(resources[j])) continue;
                 const other = resources[j];
                 const otherType = getTypeName(other);
                 if (otherType !== typeName) continue;

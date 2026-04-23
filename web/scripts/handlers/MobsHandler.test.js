@@ -138,6 +138,22 @@ describe('MobsHandler', () => {
             expect(mobs[0].tier).toBe(5);
         });
 
+        // @verified 2026-04-24: wood spirits come from MobsDatabase as type='Log';
+        // living-resource filters must map that alias to settingLivingWoodEnchants.
+        test('synthetic: living wood critter uses the living wood settings key', () => {
+            settingsSync.getJSON.mockImplementation((key) =>
+                key === 'settingLivingWoodEnchants' ? allTrueSettings : null
+            );
+
+            const p = normalizeParams({'0': 8010, '1': 553, '2': 255, '7': [0, 0], '13': 856, '33': 0});
+            handler.NewMobEvent(p);
+
+            const mobs = handler.getMobList();
+            expect(mobs).toHaveLength(1);
+            expect(mobs[0].name).toBe('Log');
+            expect(settingsSync.getJSON).toHaveBeenCalledWith('settingLivingWoodEnchants');
+        });
+
         // @verified 2026-04-18: hostile camp mob typeId=2067 (T5_MOB_ROAMING_KEEPER_CAMP_UNPROVEN_MALE).
         // Real DB: l=SILVERCOINS (not harvestable), category=camp -> EnemyType.Enemy.
         test('pcap-derived spawn: hostile mob typeId=2067 category=camp adds as Enemy', async () => {

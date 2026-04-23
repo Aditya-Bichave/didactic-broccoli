@@ -1,3 +1,27 @@
+const RESOURCE_PREFIX_TO_NAME = {
+    'fsp': 'Fiber',
+    'hsp': 'Hide',
+    'wsp': 'Wood',
+    'osp': 'Ore',
+    'rsp': 'Rock',
+    'flp': 'Fiber',
+    'hlp': 'Hide',
+    'wlp': 'Wood',
+    'olp': 'Ore',
+    'rlp': 'Rock'
+};
+
+const RESOURCE_NAME_TO_PREFIX = {
+    fiber: 'fsp',
+    hide: 'hsp',
+    wood: 'wsp',
+    log: 'wsp',
+    logs: 'wsp',
+    ore: 'osp',
+    rock: 'rsp',
+    stone: 'rsp'
+};
+
 export function selectAllTierEnchants(resourcePrefix, tierIndex) {
     const enchantLevels = ['e0', 'e1', 'e2', 'e3', 'e4'];
     const checkboxes = [];
@@ -171,9 +195,18 @@ export function generateResourceGrid(config) {
 }
 
 export function getResourceStorageKey(prefix, type) {
-    const resourceName = {
-        'fsp': 'Fiber', 'hsp': 'Hide', 'wsp': 'Wood', 'osp': 'Ore', 'rsp': 'Rock',
-        'flp': 'Fiber', 'hlp': 'Hide', 'wlp': 'Wood', 'olp': 'Ore', 'rlp': 'Rock'
-    }[prefix];
+    const resourceName = RESOURCE_PREFIX_TO_NAME[prefix];
+    if (!resourceName) return null;
     return `setting${type}${resourceName}Enchants`;
+}
+
+export function getResourcePrefix(resourceName) {
+    if (!resourceName) return null;
+    return RESOURCE_NAME_TO_PREFIX[String(resourceName).trim().toLowerCase()] || null;
+}
+
+export function getResourceStorageKeyForName(resourceName, type) {
+    const prefix = getResourcePrefix(resourceName);
+    if (!prefix) return null;
+    return getResourceStorageKey(prefix, type);
 }

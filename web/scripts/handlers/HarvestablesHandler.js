@@ -1,6 +1,6 @@
 import {CATEGORIES} from "../constants/LoggerConstants.js";
 import settingsSync from "../utils/SettingsSync.js";
-import {getResourceStorageKey} from "../utils/ResourcesHelper.js";
+import {getResourceStorageKeyForName} from "../utils/ResourcesHelper.js";
 
 const HarvestableType =
 {
@@ -141,16 +141,16 @@ export class HarvestablesHandler
             }
         }
 
-        let prefix;
-        if (resourceType === 'Fiber' || resourceType === 'fiber') prefix = 'fsp';
-        else if (resourceType === 'Hide' || resourceType === 'hide') prefix = 'hsp';
-        else if (resourceType === 'Wood' || resourceType === 'Logs') prefix = 'wsp';
-        else if (resourceType === 'Ore' || resourceType === 'ore') prefix = 'osp';
-        else if (resourceType === 'Rock' || resourceType === 'rock') prefix = 'rsp';
-
-        let type = isLiving ? 'Living' : 'Static';
-
-        const settingKey = getResourceStorageKey(prefix, type);
+        const type = isLiving ? 'Living' : 'Static';
+        const settingKey = getResourceStorageKeyForName(resourceType, type);
+        if (!settingKey) {
+            window.logger?.warn(CATEGORIES.HARVESTABLES, 'UnknownResourceSettingKey', {
+                stringType,
+                resourceType,
+                isLiving
+            });
+            return false;
+        }
 
         return settingsSync.getJSON(settingKey)?.[`e${charges}`][tier - 1] === true;
     }

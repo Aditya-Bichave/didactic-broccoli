@@ -19,9 +19,19 @@ describe('EventRouter', () => {
             error: vi.fn()
         };
 
+        const localPlayer = {id: 0, mounted: false};
+
         handlers = {
             playersHandler: {
-                updateLocalPlayerPosition: vi.fn(),
+                localPlayer,
+                setLocalPlayerId: vi.fn((id) => {
+                    localPlayer.id = id;
+                }),
+                updateLocalPlayerPosition: vi.fn((x, y) => {
+                    localPlayer.posX = x;
+                    localPlayer.posY = y;
+                }),
+                updatePlayerPosition: vi.fn(),
                 removePlayer: vi.fn(),
                 handleNewPlayerEvent: vi.fn(),
                 handleMountedPlayerEvent: vi.fn(),
@@ -80,19 +90,23 @@ describe('EventRouter', () => {
     // -------------------------------------------------------------------------
     describe('onRequest opMove', () => {
         // @verified 2026-04-18: opcode 22 is the current Move request in Protocol18
-        test('opcode 22 with float array updates local player position', () => {
+        test('opcode 22 with float array stores move target without overwriting current position', () => {
+            const dateNowSpy = vi.spyOn(Date, 'now').mockReturnValue(1_000);
+
             EventRouter.onRequest({253: 22, 1: [10.5, 20.5]});
 
-            expect(handlers.playersHandler.updateLocalPlayerPosition).toHaveBeenCalledWith(10.5, 20.5);
-            expect(radarRenderer.setLocalPlayerPosition).toHaveBeenCalledWith(10.5, 20.5);
-            expect(EventRouter.getLocalPlayerPosition()).toEqual({x: 10.5, y: 20.5});
+            expect(handlers.playersHandler.updateLocalPlayerPosition).not.toHaveBeenCalled();
+            expect(radarRenderer.setLocalPlayerPosition).not.toHaveBeenCalled();
+            expect(EventRouter.getLocalPlayerPosition()).toEqual({x: 0, y: 0});
+
+            dateNowSpy.mockRestore();
         });
 
         // @verified 2026-04-18: opcode 21 still accepted for backward compat with pre-Protocol18 captures
         test('opcode 21 still works for backward compat', () => {
             EventRouter.onRequest({253: 21, 1: [1.5, 2.5]});
 
-            expect(handlers.playersHandler.updateLocalPlayerPosition).toHaveBeenCalledWith(1.5, 2.5);
+            expect(handlers.playersHandler.updateLocalPlayerPosition).not.toHaveBeenCalled();
         });
 
         // @verified 2026-04-18: opcode 22 with pcap-derived float array from move-request fixture
@@ -104,9 +118,7 @@ describe('EventRouter', () => {
 
             EventRouter.onRequest(p);
 
-            expect(handlers.playersHandler.updateLocalPlayerPosition).toHaveBeenCalledWith(
-                p[1][0], p[1][1]
-            );
+            expect(handlers.playersHandler.updateLocalPlayerPosition).not.toHaveBeenCalled();
         });
 
         // @verified 2026-04-18: second move-request entry from same pcap sequence
@@ -118,9 +130,7 @@ describe('EventRouter', () => {
 
             EventRouter.onRequest(p);
 
-            expect(handlers.playersHandler.updateLocalPlayerPosition).toHaveBeenCalledWith(
-                p[1][0], p[1][1]
-            );
+            expect(handlers.playersHandler.updateLocalPlayerPosition).not.toHaveBeenCalled();
         });
 
         // @verified 2026-04-18: unrelated opcodes must not update position
@@ -140,7 +150,50 @@ describe('EventRouter', () => {
 
             EventRouter.onRequest({253: 22, 1: buffer});
 
-            expect(handlers.playersHandler.updateLocalPlayerPosition).toHaveBeenCalledWith(25.0, 50.0);
+            expect(handlers.playersHandler.updateLocalPlayerPosition).not.toHaveBeenCalled();
+        });
+
+        test('getLocalPlayerPosition interpolates between move origin and destination', () => {
+            const dateNowSpy = vi.spyOn(Date, 'now');
+            dateNowSpy.mockReturnValue(1_000);
+
+            EventRouter.onRequest({253: 22, 1: [11, 0]});
+
+            dateNowSpy.mockReturnValue(2_000);
+            expect(EventRouter.getLocalPlayerPosition()).toEqual({
+                x: 5.5,
+                y: 0
+            });
+
+            dateNowSpy.mockRestore();
+        });
+
+        test('authoritative local Move event overrides request-based prediction', () => {
+            EventRouter.onResponse({253: 2, 0: 6740, 9: [0, 0]}, clearHandlers);
+            handlers.playersHandler.updateLocalPlayerPosition.mockClear();
+            radarRenderer.setLocalPlayerPosition.mockClear();
+
+            EventRouter.onRequest({253: 22, 1: [20, 0]});
+            EventRouter.onEvent({0: 6740, 4: 3.25, 5: 1.5, 252: EventCodes.Move});
+
+            expect(handlers.playersHandler.updatePlayerPosition).toHaveBeenCalledWith(6740, 3.25, 1.5);
+            expect(handlers.playersHandler.updateLocalPlayerPosition).toHaveBeenCalledWith(3.25, 1.5);
+            expect(radarRenderer.setLocalPlayerPosition).toHaveBeenCalledWith(3.25, 1.5);
+            expect(EventRouter.getLocalPlayerPosition()).toEqual({x: 3.25, y: 1.5});
+        });
+
+        test('after authoritative local Move events, future move requests no longer guess current position', () => {
+            const dateNowSpy = vi.spyOn(Date, 'now');
+            EventRouter.onResponse({253: 2, 0: 6740, 9: [0, 0]}, clearHandlers);
+            EventRouter.onEvent({0: 6740, 4: 4, 5: 0, 252: EventCodes.Move});
+
+            dateNowSpy.mockReturnValue(1_000);
+            EventRouter.onRequest({253: 22, 1: [30, 0]});
+            dateNowSpy.mockReturnValue(2_000);
+
+            expect(EventRouter.getLocalPlayerPosition()).toEqual({x: 4, y: 0});
+
+            dateNowSpy.mockRestore();
         });
     });
 
@@ -183,6 +236,16 @@ describe('EventRouter', () => {
 
             expect(map.id).toBe('0201');
             expect(clearHandlers).toHaveBeenCalledTimes(1);
+        });
+
+        test('opcode 2 stores local player id from params[0]', async () => {
+            const fix = await loadFixture('router', 'join-finished');
+            const msg = fix.messages[0];
+            const p = normalizeParams(msg.parameters);
+
+            EventRouter.onResponse(p, clearHandlers);
+
+            expect(handlers.playersHandler.setLocalPlayerId).toHaveBeenCalledWith(6740);
         });
 
         // Pinned: ROUTER-1 (issue #57). EventRouter.onResponse opcode 2 does not extract isBZ from
@@ -314,6 +377,7 @@ describe('EventRouter', () => {
         test('Move event dispatches to mobsHandler with positions', () => {
             EventRouter.onEvent({0: 12345, 4: 100, 5: 200, 252: 3});
 
+            expect(handlers.playersHandler.updatePlayerPosition).toHaveBeenCalledWith(12345, 100, 200);
             expect(handlers.mobsHandler.updateMobPosition).toHaveBeenCalledWith(12345, 100, 200);
             expect(handlers.mobsHandler.updateMistPosition).toHaveBeenCalledWith(12345, 100, 200);
         });

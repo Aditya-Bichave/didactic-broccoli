@@ -212,4 +212,4 @@ make all-in-one       # Update data + build + package
 
 ---
 
-**Full Changelog**: https://github.com/Nouuu/Albion-Online-OpenRadar/compare/1.3.0...2.0.0
+**Full Changelog**: https://github.com/Aditya-Bichave/didactic-broccoli/compare/1.3.0...2.0.0

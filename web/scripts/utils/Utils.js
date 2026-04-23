@@ -25,6 +25,7 @@ import * as WebSocketManager from '../core/WebSocketManager.js';
 import * as DatabaseLoader from '../core/DatabaseLoader.js';
 import * as EventRouter from '../core/EventRouter.js';
 import * as PlayerListRenderer from '../core/PlayerListRenderer.js';
+import {createGatherController} from '../core/GatherController.js';
 
 let isInitialized = false;
 let isDestroying = false;
@@ -34,6 +35,7 @@ let playerListIntervalId = null;
 let cleanupIntervalId = null;
 let buttonClickHandler = null;
 let lastPlayerListHash = '';
+let gatherController = null;
 
 let handlers = {
     harvestables: null, mobs: null, players: null, chests: null,
@@ -209,6 +211,10 @@ export async function initRadar() {
         initializeRadarRenderer();
         EventRouter.setRadarRenderer(radarRenderer);
 
+        gatherController = createGatherController();
+        await gatherController.init();
+        window.gatherController = gatherController;
+
         playerListIntervalId = setInterval(() => {
             const players = handlers.players?.getFilteredPlayers?.() || [];
             const hash = `${players.length}:` + players.map(p => `${p.id}:${p.currentHealth}:${p.mounted ? 1 : 0}`).join(',');
@@ -271,6 +277,12 @@ export function destroyRadar() {
         window.pipManager = null;
     }
 
+    if (gatherController) {
+        gatherController.destroy();
+        gatherController = null;
+        window.gatherController = null;
+    }
+
     if (radarRenderer) {
         radarRenderer.stop();
         radarRenderer = null;
@@ -291,6 +303,7 @@ export function destroyRadar() {
     window.mobsHandler = null;
     window.playersHandler = null;
     window.radarRenderer = null;
+    window.gatherController = null;
 
     PlayerListRenderer.reset();
     EventRouter.reset();

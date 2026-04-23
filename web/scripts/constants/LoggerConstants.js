@@ -14,6 +14,7 @@ export const CATEGORIES = {
     PLAYERS: 'PLAYERS',
     MOBS: 'MOBS',
     HARVESTABLES: 'HARVESTABLES',
+    GATHER: 'GATHER',
     DUNGEONS: 'DUNGEONS',
     FISHING: 'FISHING',
     RENDERING: 'RENDERING'
@@ -26,6 +27,7 @@ export const CATEGORY_SETTINGS = {
     PLAYERS: 'categoryPlayers',
     MOBS: 'categoryMobs',
     HARVESTABLES: 'categoryHarvestables',
+    GATHER: 'categoryHarvestables',
     DUNGEONS: 'categoryDungeons',
     FISHING: 'categoryFishing',
     RENDERING: 'categoryRendering'

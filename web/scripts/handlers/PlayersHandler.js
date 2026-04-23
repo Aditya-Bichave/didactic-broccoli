@@ -196,7 +196,34 @@ export class PlayersHandler {
         throw new Error('Not implemented');
     }
 
+    setLocalPlayerId(id) {
+        this.localPlayer.id = id;
+    }
+
+    updatePlayerPosition(id, posX, posY) {
+        if (this.localPlayer.id === id) {
+            this.localPlayer.oldPosX = this.localPlayer.posX;
+            this.localPlayer.oldPosY = this.localPlayer.posY;
+            this.localPlayer.posX = posX;
+            this.localPlayer.posY = posY;
+            this.localPlayer.touch();
+        }
+
+        const player = this.playersList.find(p => p.id === id);
+        if (player) {
+            player.oldPosX = player.posX;
+            player.oldPosY = player.posY;
+            player.posX = posX;
+            player.posY = posY;
+            player.touch();
+        }
+    }
+
     updatePlayerMounted(id, mounted) {
+        if (this.localPlayer.id === id) {
+            this.localPlayer.setMounted(mounted);
+        }
+
         const player = this.playersList.find(p => p.id === id);
         if (player) {
             player.setMounted(mounted);

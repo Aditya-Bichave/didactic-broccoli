@@ -1,5 +1,5 @@
 {
-  "name": "albion-openradar",
+  "name": "didactic-broccoli",
   "version": "2.0.0",
   "description": "OpenRadar - Real-time radar for Albion Online (Go Backend)",
   "private": true,
@@ -25,7 +25,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
-  "author": "Nospy",
+  "author": "Aditya-Bichave",
   "license": "ISC",
   "engines": {
     "node": ">=20.0.0"

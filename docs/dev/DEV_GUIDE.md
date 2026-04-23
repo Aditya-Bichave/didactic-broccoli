@@ -63,7 +63,7 @@ OpenRadar/
 ### 2.2 Quick Setup
 
 ```bash
-git clone https://github.com/Nouuu/Albion-Online-OpenRadar.git
+git clone https://github.com/Aditya-Bichave/didactic-broccoli.git
 cd Albion-Online-OpenRadar
 
 # Install Air for hot-reload

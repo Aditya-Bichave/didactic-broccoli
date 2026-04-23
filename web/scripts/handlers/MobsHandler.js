@@ -1,6 +1,6 @@
 import {CATEGORIES} from '../constants/LoggerConstants.js';
 import settingsSync from '../utils/SettingsSync.js';
-import {getResourceStorageKey} from "../utils/ResourcesHelper.js";
+import {getResourceStorageKeyForName} from "../utils/ResourcesHelper.js";
 
 export const EnemyType =
     {
@@ -248,15 +248,16 @@ export class MobsHandler {
         if (mob.type === EnemyType.LivingHarvestable || mob.type === EnemyType.LivingSkinnable) {
             if (mob.tier > 0 && mob.name) {
                 const resourceType = mob.name;
-                let prefix;
-                if (resourceType === 'Fiber' || resourceType === 'fiber') prefix = 'fsp';
-                else if (resourceType === 'Hide' || resourceType === 'hide') prefix = 'hsp';
-                else if (resourceType === 'Wood' || resourceType === 'Logs') prefix = 'wsp';
-                else if (resourceType === 'Ore' || resourceType === 'ore') prefix = 'osp';
-                else if (resourceType === 'Rock' || resourceType === 'rock') prefix = 'rsp';
-                const settingKey = getResourceStorageKey(prefix, 'Living');
+                const settingKey = getResourceStorageKeyForName(resourceType, 'Living');
+                if (!settingKey) {
+                    window.logger?.warn(CATEGORIES.MOBS, 'UnknownLivingResourceSettingKey', {
+                        typeId,
+                        resourceType
+                    });
+                    return;
+                }
 
-                if (!settingsSync.getJSON(settingKey)?.[`e${mob.enchantmentLevel}`][mob.tier - 1]) {
+                if (settingsSync.getJSON(settingKey)?.[`e${mob.enchantmentLevel}`]?.[mob.tier - 1] !== true) {
                     return;
                 }
             }

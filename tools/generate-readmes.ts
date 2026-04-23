@@ -95,7 +95,7 @@ Compare with checksums-sha256.txt from the release.
 
 ## Support
 
-GitHub: https://github.com/Nouuu/Albion-Online-OpenRadar
+GitHub: https://github.com/Aditya-Bichave/didactic-broccoli
 
 ## Technical Details
 
@@ -194,7 +194,7 @@ Compare with checksums-sha256.txt from the release.
 
 ## Support
 
-GitHub: https://github.com/Nouuu/Albion-Online-OpenRadar
+GitHub: https://github.com/Aditya-Bichave/didactic-broccoli
 
 ## Technical Details
 

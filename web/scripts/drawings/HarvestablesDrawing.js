@@ -3,6 +3,14 @@ import settingsSync from "../utils/SettingsSync.js";
 import {CATEGORIES} from "../constants/LoggerConstants.js";
 
 export class HarvestablesDrawing extends DrawingUtils  {
+    isLivingHarvestable(harvestable) {
+        const mobileTypeId = harvestable?.mobileTypeId;
+        return mobileTypeId !== null &&
+            mobileTypeId !== undefined &&
+            mobileTypeId !== 65535 &&
+            mobileTypeId !== -1;
+    }
+
     interpolate(harvestables, lpX, lpY, t) {
         for (const harvestableOne of harvestables) {
             this.interpolateEntity(harvestableOne, lpX, lpY, t);
@@ -16,7 +24,9 @@ export class HarvestablesDrawing extends DrawingUtils  {
 
         for (const harvestableOne of harvestables)
         {
-            if (harvestableOne.size <= 0) continue;
+            const isLivingHarvestable = this.isLivingHarvestable(harvestableOne);
+            const size = Number(harvestableOne.size ?? 0);
+            if ((!isLivingHarvestable && size <= 0) || (isLivingHarvestable && size < 0)) continue;
 
             let draw = undefined;
 
@@ -97,10 +107,10 @@ export class HarvestablesDrawing extends DrawingUtils  {
             }
 
             // Resource count badge (if enabled)
-            if (settingsSync.getBool('settingResourceCount'))
+            if (settingsSync.getBool('settingResourceCount') && size > 0)
             {
                 const realResources = this.calculateRealResources(
-                    parseInt(harvestableOne.size),
+                    parseInt(size),
                     harvestableOne.tier
                 );
                 this.drawResourceCountBadge(ctx, point.x, point.y, realResources);

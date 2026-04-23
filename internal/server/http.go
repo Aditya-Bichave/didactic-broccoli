@@ -13,6 +13,7 @@ import (
 
 	"github.com/segmentio/encoding/json"
 
+	"github.com/nospy/albion-openradar/internal/gather"
 	"github.com/nospy/albion-openradar/internal/logger"
 	"github.com/nospy/albion-openradar/internal/templates"
 )
@@ -24,6 +25,7 @@ type HTTPServer struct {
 	server    *http.Server
 	logger    *logger.Logger
 	wsHandler *WebSocketHandler
+	devMode   bool
 	// Filesystems (can be embed.FS or os.DirFS)
 	images  fs.FS
 	scripts fs.FS
@@ -33,6 +35,7 @@ type HTTPServer struct {
 	// Template engine
 	tmpl    *templates.Engine
 	version string
+	gather  *gather.Service
 }
 
 // NewHTTPServer creates a new HTTP server with embedded assets (production mode)
@@ -77,6 +80,7 @@ func NewHTTPServer(
 		mux:       http.NewServeMux(),
 		logger:    log,
 		wsHandler: wsHandler,
+		devMode:   false,
 		images:    imagesFS,
 		scripts:   scriptsFS,
 		data:      dataFS,
@@ -84,6 +88,7 @@ func NewHTTPServer(
 		styles:    stylesFS,
 		tmpl:      tmpl,
 		version:   version,
+		gather:    gather.NewService(log, gather.NewPlatformExecutor()),
 	}
 	s.setupRoutes()
 	return s, nil
@@ -104,6 +109,7 @@ func NewHTTPServerDev(port int, appDir string, wsHandler *WebSocketHandler, log 
 		mux:       http.NewServeMux(),
 		logger:    log,
 		wsHandler: wsHandler,
+		devMode:   true,
 		images:    os.DirFS(appDir + "/web/images"),
 		scripts:   os.DirFS(appDir + "/web/scripts"),
 		data:      os.DirFS(appDir + "/web/ao-bin-dumps"),
@@ -111,6 +117,7 @@ func NewHTTPServerDev(port int, appDir string, wsHandler *WebSocketHandler, log 
 		styles:    os.DirFS(appDir + "/web/styles"),
 		tmpl:      tmpl,
 		version:   version,
+		gather:    gather.NewService(log, gather.NewPlatformExecutor()),
 	}
 	s.setupRoutes()
 	return s, nil
@@ -123,6 +130,15 @@ func (s *HTTPServer) setupRoutes() {
 	dataCacheDuration := 7 * 24 * time.Hour
 	scriptsCacheDuration := 1 * time.Hour
 	stylesCacheDuration := 1 * time.Hour
+	staticNoCache := false
+
+	if s.devMode {
+		imageCacheDuration = 0
+		dataCacheDuration = 0
+		scriptsCacheDuration = 0
+		stylesCacheDuration = 0
+		staticNoCache = true
+	}
 
 	// WebSocket endpoint
 	if s.wsHandler != nil {
@@ -153,21 +169,22 @@ func (s *HTTPServer) setupRoutes() {
 	s.mux.Handle("/images/Items/", s.fsHandlerWithFallback("/images/Items/", s.images, "Items", "_default.webp", imageCacheDuration))
 	s.mux.Handle("/images/Spells/", s.fsHandlerWithFallback("/images/Spells/", s.images, "Spells", "_default.webp", imageCacheDuration))
 	// Other images: standard handler (cache 24h)
-	s.mux.Handle("/images/", s.fsHandler("/images/", s.images, imageCacheDuration, false))
+	s.mux.Handle("/images/", s.fsHandler("/images/", s.images, imageCacheDuration, staticNoCache))
 	// Scripts: cache 1h + gzip
-	s.mux.Handle("/scripts/", s.gzipFSHandlerDirect("/scripts/", s.scripts, scriptsCacheDuration))
-	s.mux.Handle("/sounds/", s.fsHandler("/sounds/", s.sounds, 0, false))
+	s.mux.Handle("/scripts/", s.gzipFSHandlerDirect("/scripts/", s.scripts, scriptsCacheDuration, staticNoCache))
+	s.mux.Handle("/sounds/", s.fsHandler("/sounds/", s.sounds, 0, staticNoCache))
 	// Styles: cache 1h + gzip
-	s.mux.Handle("/styles/", s.gzipFSHandlerDirect("/styles/", s.styles, stylesCacheDuration))
+	s.mux.Handle("/styles/", s.gzipFSHandlerDirect("/styles/", s.styles, stylesCacheDuration, staticNoCache))
 
 	// ao-bin-dumps with gzip support (data FS is already the ao-bin-dumps directory)
 	s.mux.Handle(
 		"/ao-bin-dumps/",
-		s.gzipFSHandlerDirect("/ao-bin-dumps/", s.data, dataCacheDuration),
+		s.gzipFSHandlerDirect("/ao-bin-dumps/", s.data, dataCacheDuration, staticNoCache),
 	)
 
 	// API endpoints
 	s.mux.HandleFunc("/api/settings/server-logs", s.handleServerLogs)
+	s.mux.Handle("/api/gather/", newGatherAPIHandler(s.gather, s.logger))
 }
 
 // renderPage renders a page template
@@ -285,6 +302,7 @@ func (s *HTTPServer) gzipFSHandlerDirect(
 	prefix string,
 	fsys fs.FS,
 	cacheDuration time.Duration,
+	noCache bool,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		urlPath := strings.TrimPrefix(r.URL.Path, prefix)
@@ -296,7 +314,7 @@ func (s *HTTPServer) gzipFSHandlerDirect(
 			if data, err := fs.ReadFile(fsys, gzPath); err == nil {
 				w.Header().Set("Content-Encoding", "gzip")
 				setContentType(w, urlPath)
-				setCacheHeaders(w, cacheDuration, false, "Accept-Encoding")
+				setCacheHeaders(w, cacheDuration, noCache, "Accept-Encoding")
 				//nolint:gosec // G705: data is read from embed.FS (compiled-in assets), not user-controlled.
 				_, _ = w.Write(data)
 				return
@@ -311,7 +329,7 @@ func (s *HTTPServer) gzipFSHandlerDirect(
 		}
 
 		setContentType(w, urlPath)
-		setCacheHeaders(w, cacheDuration, false, "Accept-Encoding")
+		setCacheHeaders(w, cacheDuration, noCache, "Accept-Encoding")
 
 		// Compress on the fly if large and client accepts gzip
 		if acceptsGzip && len(data) > 1024 {
