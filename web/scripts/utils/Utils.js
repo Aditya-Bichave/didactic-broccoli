@@ -56,15 +56,19 @@ function cleanupStaleEntities() {
     const cleanedPlayers = handlers.players?.cleanupStaleEntities?.(STALE_ENTITY_MAX_AGE) || 0;
     const cleanedMobs = handlers.mobs?.cleanupStaleEntities?.(STALE_ENTITY_MAX_AGE) || 0;
     const cleanedHarvestables = handlers.harvestables?.cleanupStaleEntities?.(STALE_ENTITY_MAX_AGE) || 0;
+    const cleanedDungeons = handlers.dungeons?.cleanupStaleEntities?.(STALE_ENTITY_MAX_AGE) || 0;
+    const cleanedChests = handlers.chests?.cleanupStaleEntities?.(STALE_ENTITY_MAX_AGE) || 0;
 
     const activePlayerIds = new Set(handlers.players?.getFilteredPlayers?.().map(p => p.id) || []);
     const cleanedRenderCache = PlayerListRenderer.cleanupStaleCache(activePlayerIds);
 
-    if (cleanedPlayers || cleanedMobs || cleanedHarvestables || cleanedRenderCache) {
+    if (cleanedPlayers || cleanedMobs || cleanedHarvestables || cleanedDungeons || cleanedChests || cleanedRenderCache) {
         window.logger?.debug(CATEGORIES.SYSTEM, 'StaleEntityCleanup', {
             players: cleanedPlayers,
             mobs: cleanedMobs,
             harvestables: cleanedHarvestables,
+            dungeons: cleanedDungeons,
+            chests: cleanedChests,
             renderCache: cleanedRenderCache
         });
     }

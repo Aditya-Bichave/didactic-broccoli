@@ -25,6 +25,7 @@ func newGatherAPIHandler(service *gather.Service, log *logger.Logger) http.Handl
 		if r.Body == nil {
 			return req, nil
 		}
+		defer r.Body.Close()
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			if errors.Is(err, http.ErrBodyNotAllowed) || errors.Is(err, io.EOF) {
 				return req, nil
