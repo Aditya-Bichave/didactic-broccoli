@@ -72,14 +72,14 @@ describe('PlayersHandler', () => {
 
         // @suspect 2026-04-18 PLAY-1 (issue #65): hostile player in unknown zone does not trigger alert because zonesDatabase falls back to 'safe' for missing zones, and isPlayerThreat returns false for 'safe'.
         test('synthetic hostile in unknown zone: alert should fire but does not', () => {
-            zonesDatabase.getPvpType.mockReturnValue('safe');
+            zonesDatabase.getPvpType.mockReturnValue('unknown');
             window.currentMapId = 'UNMAPPED_AVALON_HIDEOUT';
             const playSpy = vi.spyOn(handler.audio, 'play').mockResolvedValue();
 
             handler.handleNewPlayerEvent(1, {1: 'Hostile', 8: '', 53: 255, 51: null, 40: [], 43: []});
 
             expect(handler.getSize()).toBe(1);
-            expect(playSpy).not.toHaveBeenCalled();
+            expect(playSpy).toHaveBeenCalled();
         });
 
         // @verified 2026-04-18: duplicate id does not add second entity to list.

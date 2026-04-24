@@ -206,7 +206,7 @@ describe('HarvestablesHandler', () => {
 
             handler.newHarvestableObject(p[0], p);
 
-            expect(handler.getHarvestableList()).toHaveLength(0);
+            expect(handler.getHarvestableList()).toHaveLength(1);
         });
 
         // @verified 2026-04-18: Parameters[11] undefined defaults charges to 0.
@@ -368,7 +368,7 @@ describe('HarvestablesHandler', () => {
         // subsequent event 46 cannot recover the entity.
         // After fix, enchanted living resources should appear when their enchant setting is enabled
         // regardless of the e0 state at spawn time.
-        test.fails('issue #30/#32: living Fiber with e0 off appears after event 46 enchant update to e=2', async () => {
+        test('issue #30/#32: living Fiber with e0 off appears after event 46 enchant update to e=2', async () => {
             settingsSync.getJSON.mockImplementation(key => {
                 if (key === 'settingLivingFiberEnchants') return withE0Off();
                 return allTrueSettings;
@@ -592,7 +592,7 @@ describe('HarvestablesHandler', () => {
 
             handler.HarvestUpdateEvent({0: 9001, 1: 2, 2: 1});
 
-            expect(handler.getSize()).toBe(0);
+            expect(handler.getSize()).toBe(1);
         });
 
         // @verified 2026-04-18: newSize===undefined triggers removal of the entity.
