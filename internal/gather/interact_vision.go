@@ -79,7 +79,7 @@ func collectVisionCandidates(img image.Image, region WindowRect, predicted probe
 	return scored
 }
 
-func averageBorderColor(img image.Image) (float64, float64, float64) {
+func averageBorderColor(img image.Image) (avgR, avgG, avgB float64) {
 	b := img.Bounds()
 	if b.Empty() {
 		return 0, 0, 0

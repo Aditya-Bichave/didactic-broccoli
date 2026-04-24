@@ -194,7 +194,7 @@ func (s *Service) ExecuteTarget(ctx context.Context, req GatherCommandRequest) (
 		return s.failExecutionLocked(err)
 	}
 	if !focused {
-		return s.failExecutionLocked(errors.New("Albion window focus lost"))
+		return s.failExecutionLocked(errors.New("albion window focus lost"))
 	}
 
 	rawStep := ComputeStep(calibration, *req.Player, req.Target.Position)
@@ -369,7 +369,7 @@ func (s *Service) ExecuteTest(ctx context.Context, direction string) (GatherComm
 		return s.failExecutionLocked(err)
 	}
 	if !focused {
-		return s.failExecutionLocked(errors.New("Albion window must be focused for test click"))
+		return s.failExecutionLocked(errors.New("albion window must be focused for test click"))
 	}
 
 	var target Point
