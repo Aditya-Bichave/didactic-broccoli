@@ -19,6 +19,7 @@ export class RadarRenderer {
 
         this.previousTime = performance.now();
         this.animationFrameId = null;
+        this.timeoutId = null;
 
         this.TARGET_FPS = 30;
         this.FRAME_TIME = 1000 / this.TARGET_FPS;
@@ -61,7 +62,7 @@ export class RadarRenderer {
      * Start the game loop
      */
     start() {
-        this.animationFrameId = requestAnimationFrame(() => this.gameLoop());
+        this.scheduleNextFrame();
         window.logger?.info(CATEGORIES.MAP, 'RadarRendererGameLoopStarted', {});
     }
 
@@ -72,17 +73,41 @@ export class RadarRenderer {
         if (this.animationFrameId !== null) {
             cancelAnimationFrame(this.animationFrameId);
             this.animationFrameId = null;
-            window.logger?.info(CATEGORIES.MAP, 'RadarRendererGameLoopStopped', {});
+        }
+        if (this.timeoutId !== null) {
+            clearTimeout(this.timeoutId);
+            this.timeoutId = null;
         }
 
+        window.logger?.info(CATEGORIES.MAP, 'RadarRendererGameLoopStopped', {});
+
         this.canvasManager?.destroy();
+    }
+
+    shouldUseBackgroundScheduler() {
+        return document.hidden === true && window.pipManager?.isActive === true;
+    }
+
+    scheduleNextFrame() {
+        if (this.shouldUseBackgroundScheduler()) {
+            this.timeoutId = setTimeout(() => {
+                this.timeoutId = null;
+                this.gameLoop();
+            }, this.FRAME_TIME);
+            return;
+        }
+
+        this.animationFrameId = requestAnimationFrame(() => {
+            this.animationFrameId = null;
+            this.gameLoop();
+        });
     }
 
     /**
      * Main game loop - runs every frame (throttled to TARGET_FPS)
      */
     gameLoop() {
-        this.animationFrameId = requestAnimationFrame(() => this.gameLoop());
+        this.scheduleNextFrame();
 
         const currentTime = performance.now();
 
@@ -191,11 +216,32 @@ export class RadarRenderer {
 
             if (!this.cachedClusters || timeSinceLastUpdate > this.CLUSTER_UPDATE_INTERVAL) {
                 try {
-                    const staticList = this.handlers.harvestablesHandler?.harvestableList || [];
-                    const livingList = (this.handlers.mobsHandler?.mobsList || []).filter(mob =>
-                        mob.type === window.EnemyType?.LivingHarvestable ||
-                        mob.type === window.EnemyType?.LivingSkinnable
-                    );
+                    const staticList = (this.handlers.harvestablesHandler?.harvestableList || []).filter((resource) => {
+                        const isLivingHarvestable =
+                            resource?.mobileTypeId !== null &&
+                            resource?.mobileTypeId !== undefined &&
+                            resource?.mobileTypeId !== 65535 &&
+                            resource?.mobileTypeId !== -1;
+
+                        return this.handlers.harvestablesHandler?.shouldDisplayHarvestable?.(
+                            resource?.stringType,
+                            isLivingHarvestable,
+                            resource?.tier,
+                            resource?.charges
+                        ) === true;
+                    });
+                    const livingList = (this.handlers.mobsHandler?.mobsList || []).filter((mob) => {
+                        const isLivingResource =
+                            mob.type === window.EnemyType?.LivingHarvestable ||
+                            mob.type === window.EnemyType?.LivingSkinnable;
+
+                        return isLivingResource &&
+                            this.handlers.mobsHandler?.shouldDisplayLivingResource?.(
+                                mob.name,
+                                mob.tier,
+                                mob.enchantmentLevel
+                            ) === true;
+                    });
                     const merged = staticList.concat(livingList);
 
                     this.cachedClusters = this.drawingUtils.detectClusters(

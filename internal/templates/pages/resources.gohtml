@@ -202,6 +202,7 @@
             const settingsSync = window.settingsSync;
             const {
                 attachCheckboxListeners,
+                createDefaultResourceEnchantSettings,
                 generateResourceGrid,
                 initializeTierButtonStates,
                 updateTierButtonState,
@@ -223,15 +224,7 @@
                 {prefix: 'olp', name: 'Elemental (Ore)', emoji: '', type: 'Living', containerId: 'living-ore-grid'},
                 {prefix: 'rlp', name: 'Elemental (Rock)', emoji: '', type: 'Living', containerId: 'living-rock-grid'}
             ];
-
             const enchantLevels = ['e0', 'e1', 'e2', 'e3', 'e4'];
-            const defaultEnchants = {
-                'e0': [false, false, false, false, false, false, false, false],
-                'e1': [false, false, false, false, false, false, false, false],
-                'e2': [false, false, false, false, false, false, false, false],
-                'e3': [false, false, false, false, false, false, false, false],
-                'e4': [false, false, false, false, false, false, false, false],
-            };
 
             // Generate all resource grids
             resources.forEach(resource => {
@@ -249,7 +242,7 @@
             const checkboxUpdates = [];
             resources.forEach(config => {
                 const storageKey = getResourceStorageKey(config.prefix, config.type);
-                const enchants = settingsSync.getJSON(storageKey, defaultEnchants);
+                const enchants = settingsSync.getJSON(storageKey, createDefaultResourceEnchantSettings());
 
                 enchantLevels.forEach(enchantLevel => {
                     const parent = document.getElementById(`${config.prefix}-${enchantLevel}`);

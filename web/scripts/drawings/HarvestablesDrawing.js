@@ -3,6 +3,10 @@ import settingsSync from "../utils/SettingsSync.js";
 import {CATEGORIES} from "../constants/LoggerConstants.js";
 
 export class HarvestablesDrawing extends DrawingUtils  {
+    getHarvestablesHandler() {
+        return window.harvestablesHandler || window.handlers?.harvestablesHandler || null;
+    }
+
     isLivingHarvestable(harvestable) {
         const mobileTypeId = harvestable?.mobileTypeId;
         return mobileTypeId !== null &&
@@ -28,8 +32,9 @@ export class HarvestablesDrawing extends DrawingUtils  {
             const size = Number(harvestableOne.size ?? 0);
             if ((!isLivingHarvestable && size <= 0) || (isLivingHarvestable && size < 0)) continue;
 
-            if (window.handlers?.harvestablesHandler) {
-                if (!window.handlers.harvestablesHandler.shouldDisplayHarvestable(
+            const harvestablesHandler = this.getHarvestablesHandler();
+            if (harvestablesHandler) {
+                if (!harvestablesHandler.shouldDisplayHarvestable(
                     harvestableOne.stringType,
                     isLivingHarvestable,
                     harvestableOne.tier,

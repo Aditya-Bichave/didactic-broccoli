@@ -1,6 +1,6 @@
 import {CATEGORIES} from '../constants/LoggerConstants.js';
 import settingsSync from '../utils/SettingsSync.js';
-import {getResourceStorageKeyForName} from "../utils/ResourcesHelper.js";
+import {createDefaultResourceEnchantSettings, getResourceStorageKeyForName} from "../utils/ResourcesHelper.js";
 
 export const EnemyType =
     {
@@ -103,6 +103,25 @@ export class MobsHandler {
         if (value === undefined || value === null) return defaultValue;
         const n = Number(value);
         return Number.isFinite(n) ? n : defaultValue;
+    }
+
+    shouldDisplayLivingResource(resourceType, tier, enchantmentLevel) {
+        if (!resourceType || !Number.isFinite(Number(tier)) || Number(tier) <= 0) {
+            return false;
+        }
+
+        const settingKey = getResourceStorageKeyForName(resourceType, 'Living');
+        if (!settingKey) {
+            window.logger?.warn(CATEGORIES.MOBS, 'UnknownLivingResourceSettingKey', {
+                resourceType,
+                tier,
+                enchantmentLevel
+            });
+            return false;
+        }
+
+        const resourceSettings = settingsSync.getJSON(settingKey, null) ?? createDefaultResourceEnchantSettings();
+        return resourceSettings?.[`e${enchantmentLevel}`]?.[Number(tier) - 1] === true;
     }
 
     NewMobEvent(parameters) {
@@ -247,17 +266,7 @@ export class MobsHandler {
         // Filter living resources based on user settings
         if (mob.type === EnemyType.LivingHarvestable || mob.type === EnemyType.LivingSkinnable) {
             if (mob.tier > 0 && mob.name) {
-                const resourceType = mob.name;
-                const settingKey = getResourceStorageKeyForName(resourceType, 'Living');
-                if (!settingKey) {
-                    window.logger?.warn(CATEGORIES.MOBS, 'UnknownLivingResourceSettingKey', {
-                        typeId,
-                        resourceType
-                    });
-                    return;
-                }
-
-                if (settingsSync.getJSON(settingKey)?.[`e${mob.enchantmentLevel}`]?.[mob.tier - 1] !== true) {
+                if (!this.shouldDisplayLivingResource(mob.name, mob.tier, mob.enchantmentLevel)) {
                     return;
                 }
             }

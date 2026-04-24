@@ -397,8 +397,8 @@ export function onEvent(Parameters) {
 }
 
 export function onRequest(Parameters) {
-    // 22 = OperationCodes.Move.
-    if (Parameters[253] == OperationCodes.Move) {
+    // 22 = OperationCodes.Move. 21 = legacy pre-Protocol18 Move (upstream 21 is now GetShopTilesForCategory).
+    if (Parameters[253] == 21 || Parameters[253] == OperationCodes.Move) {
         if (Array.isArray(Parameters[1]) && Parameters[1].length === 2) {
             rememberLocalPlayerMoveTarget(Parameters[1][0], Parameters[1][1]);
             window.logger?.debug(CATEGORIES.PLAYERS, 'Operation21_LocalPlayerTarget', {

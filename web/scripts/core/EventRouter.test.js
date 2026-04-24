@@ -102,6 +102,13 @@ describe('EventRouter', () => {
             dateNowSpy.mockRestore();
         });
 
+        // @verified 2026-04-18: opcode 21 still accepted for backward compat with pre-Protocol18 captures
+        test('opcode 21 still works for backward compat', () => {
+            EventRouter.onRequest({253: 21, 1: [1.5, 2.5]});
+
+            expect(handlers.playersHandler.updateLocalPlayerPosition).not.toHaveBeenCalled();
+        });
+
         // @verified 2026-04-18: opcode 22 with pcap-derived float array from move-request fixture
         test('opcode 22 with pcap-derived position array', async () => {
             // pcap-derived: router/move-request.json
