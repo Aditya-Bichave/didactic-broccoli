@@ -70,16 +70,16 @@ type CalibrationPayload struct {
 }
 
 type GatherTarget struct {
-	ID         int64    `json:"id"`
-	Type       string   `json:"type"`
-	Tier       int      `json:"tier"`
-	Enchant    int      `json:"enchant"`
-	Size       int      `json:"size"`
-	IsLiving   bool     `json:"isLiving"`
-	Position    Point    `json:"position"`
-	Distance   float64  `json:"distance"`
-	Status     string   `json:"status"`
-	LastSeenAt int64    `json:"lastSeenAt"`
+	ID         int64   `json:"id"`
+	Type       string  `json:"type"`
+	Tier       int     `json:"tier"`
+	Enchant    int     `json:"enchant"`
+	Size       int     `json:"size"`
+	IsLiving   bool    `json:"isLiving"`
+	Position   Point   `json:"position"`
+	Distance   float64 `json:"distance"`
+	Status     string  `json:"status"`
+	LastSeenAt int64   `json:"lastSeenAt"`
 }
 
 type StepResult struct {

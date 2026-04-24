@@ -47,7 +47,7 @@ func TestGatherAPIStatus_ReportsUnsupportedPlatform(t *testing.T) {
 	service := gather.NewService(nil, &apiFakeExecutor{supported: false})
 	handler := newGatherAPIHandler(service, nil)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/gather/status", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/gather/status", http.NoBody)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
