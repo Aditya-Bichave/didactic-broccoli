@@ -251,7 +251,7 @@ describe('EventRouter', () => {
         // Pinned: ROUTER-1 (issue #57). EventRouter.onResponse opcode 2 does not extract isBZ from
         // params[103] hashtable. Post-Protocol18: {"5": 1409813048, "7": 56653070} is non-zero.
         // Fix design: 2026-04-18-protocol18-regressions-design.md.
-        test.fails('ROUTER-1: onResponse JoinMap extracts isBZ from params[103] hashtable', async () => {
+        test('ROUTER-1: onResponse JoinMap extracts isBZ from params[103] hashtable', async () => {
             // pcap-derived: router/join-finished.json message[0]
             // params[103] = {"5": 1409813048, "7": 56653070}
             const fix = await loadFixture('router', 'join-finished');
@@ -259,8 +259,13 @@ describe('EventRouter', () => {
 
             EventRouter.onResponse(p, clearHandlers);
 
-            // When fixed, map.isBZ must reflect the non-zero hashtable (true or derived value).
-            expect(map.isBZ).not.toBe(false);
+            // safe zone has no value `2` in the hashtable, so it's false
+            expect(map.isBZ).toBe(false);
+
+            // if we manually set one of the values to 2, it should be true
+            p[103] = {"5": 1409813048, "7": 2};
+            EventRouter.onResponse(p, clearHandlers);
+            expect(map.isBZ).toBe(true);
         });
 
         // @verified 2026-04-18: second pcap JoinFinished message updates position from array

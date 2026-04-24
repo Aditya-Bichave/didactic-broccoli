@@ -70,7 +70,7 @@ export class ZonesDatabase {
   }
 
   getPvpType(zoneId) {
-    return this.getZone(zoneId)?.pvpType || "safe";
+    return this.getZone(zoneId)?.pvpType || "unknown";
   }
 
   isBlackZone(zoneId) {

@@ -28,6 +28,17 @@ export class HarvestablesDrawing extends DrawingUtils  {
             const size = Number(harvestableOne.size ?? 0);
             if ((!isLivingHarvestable && size <= 0) || (isLivingHarvestable && size < 0)) continue;
 
+            if (window.handlers?.harvestablesHandler) {
+                if (!window.handlers.harvestablesHandler.shouldDisplayHarvestable(
+                    harvestableOne.stringType,
+                    isLivingHarvestable,
+                    harvestableOne.tier,
+                    harvestableOne.charges
+                )) {
+                    continue;
+                }
+            }
+
             let draw = undefined;
 
             // Use stringType if available (corrected by MobsDatabase for living resources)

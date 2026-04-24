@@ -296,6 +296,7 @@ export class PlayersHandler {
     }
 
     triggerHostileAlert(player) {
+        if (this.alreadyIgnoredPlayers && this.alreadyIgnoredPlayers.includes(player.id)) return;
         const pvpType = zonesDatabase.getPvpType(window.currentMapId);
         if (!this.isPlayerThreat(player.faction, pvpType)) return;
 

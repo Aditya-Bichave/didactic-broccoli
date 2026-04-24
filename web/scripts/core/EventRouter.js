@@ -538,6 +538,14 @@ export function onResponse(Parameters, clearHandlersCallback) {
         if (typeof Parameters[8] === 'string' && Parameters[8].length > 0) {
             const previousMapId = map.id;
             map.id = Parameters[8];
+
+            if (Parameters[103] && typeof Parameters[103] === 'object') {
+                const values = Object.values(Parameters[103]);
+                map.isBZ = values.includes(2);
+            } else {
+                map.isBZ = false;
+            }
+
             window.currentMapId = map.id;
             lastMapChangeTime = Date.now();
             radarRenderer?.setMap?.(map);

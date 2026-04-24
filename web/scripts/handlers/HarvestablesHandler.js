@@ -200,19 +200,6 @@ export class HarvestablesHandler
             databaseValid: databaseValidation
         });
 
-        // 🎯 Check if this harvestable should be displayed based on settings
-        if (!this.shouldDisplayHarvestable(stringType, isLiving, tier, charges)) {
-            window.logger?.debug(CATEGORIES.HARVESTABLES, 'FilteredBySettings', {
-                id,
-                stringType,
-                tier,
-                enchant: charges,
-                isLiving,
-                reason: 'settings_disabled_or_invalid_resource'
-            });
-            return;
-        }
-
         var harvestable = this.harvestableList.find((item) => item.id === id);
 
         if (!harvestable)
@@ -275,19 +262,6 @@ export class HarvestablesHandler
             databaseLoaded: window.harvestablesDatabase?.isLoaded ?? false,
             databaseValid: databaseValidation
         });
-
-        // 🎯 Check if this harvestable should be displayed based on settings
-        if (!this.shouldDisplayHarvestable(stringType, isLiving, tier, charges)) {
-            window.logger?.debug(CATEGORIES.HARVESTABLES, 'FilteredByUpdate', {
-                id,
-                stringType,
-                tier,
-                enchant: charges,
-                isLiving,
-                reason: 'settings_disabled_or_invalid_resource'
-            });
-            return;
-        }
 
         var harvestable = this.harvestableList.find((item) => item.id === id);
 
@@ -363,15 +337,6 @@ export class HarvestablesHandler
                 newEnchant: enchant
             });
             harvestable.charges = enchant;
-
-            const stringType = harvestable.stringType;
-            const mobileTypeId = harvestable.mobileTypeId;
-            const isLiving = mobileTypeId !== null && mobileTypeId !== undefined
-                && mobileTypeId !== 65535 && mobileTypeId !== -1;
-
-            if (!this.shouldDisplayHarvestable(stringType, isLiving, harvestable.tier, enchant)) {
-                this.removeHarvestable(id);
-            }
         }
     }
 
