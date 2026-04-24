@@ -1,4 +1,8 @@
 from enum import Enum
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from app_logging import logger
 
 class AlbionEvents(Enum):
     # 12:637993823308929158 18:[] 19:[-63 68 12 104 -29 1 114 78 -91 -75 -21 68 -13 -96 -29 -67] 20:[-23 20 93 -6 73 127 19 78 -65 44 -42 65 -97 105 -82 -16] 21:25900 22:0 23:3 24:-1 252:89]

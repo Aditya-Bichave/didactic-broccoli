@@ -59,7 +59,7 @@ type App struct {
 func main() {
 	cfg := parseFlags()
 	if cfg.showVersion {
-		fmt.Printf("OpenRadar v%s (built: %s)\n", Version, BuildTime)
+		logger.PrintInfo("APP", "OpenRadar v%s (built: %s)", Version, BuildTime)
 		return
 	}
 
@@ -70,7 +70,7 @@ func main() {
 		if !shouldRestart {
 			break
 		}
-		fmt.Println("Restarting...")
+		logger.PrintInfo("APP", "Restarting...")
 	}
 }
 
@@ -124,7 +124,7 @@ func runApp(cfg Config) bool {
 	model, err := app.program.Run()
 	if err != nil {
 		logger.ClearLogCallback()
-		fmt.Printf("Dashboard error: %v\n", err)
+		logger.PrintError("APP", "Dashboard error: %v", err)
 	}
 
 	// Check if restart was requested

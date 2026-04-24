@@ -49,23 +49,23 @@ func NewHTTPServer(
 	// Extract subdirectories from embed.FS (they include the folder path)
 	imagesFS, err := fs.Sub(images, "web/images")
 	if err != nil {
-		fmt.Printf("[HTTP] Warning: failed to load images: %v\n", err)
+		log.Warn("HTTP", "failed to load images", err, nil)
 	}
 	scriptsFS, err := fs.Sub(scripts, "web/scripts")
 	if err != nil {
-		fmt.Printf("[HTTP] Warning: failed to load scripts: %v\n", err)
+		log.Warn("HTTP", "failed to load scripts", err, nil)
 	}
 	dataFS, err := fs.Sub(data, "web/ao-bin-dumps")
 	if err != nil {
-		fmt.Printf("[HTTP] Warning: failed to load data: %v\n", err)
+		log.Warn("HTTP", "failed to load data", err, nil)
 	}
 	soundsFS, err := fs.Sub(sounds, "web/sounds")
 	if err != nil {
-		fmt.Printf("[HTTP] Warning: failed to load sounds: %v\n", err)
+		log.Warn("HTTP", "failed to load sounds", err, nil)
 	}
 	stylesFS, err := fs.Sub(styles, "web/styles")
 	if err != nil {
-		fmt.Printf("[HTTP] Warning: failed to load styles: %v\n", err)
+		log.Warn("HTTP", "failed to load styles", err, nil)
 	}
 
 	// Initialize template engine (required)
@@ -73,7 +73,7 @@ func NewHTTPServer(
 	if err != nil {
 		return nil, fmt.Errorf("failed to load templates: %w", err)
 	}
-	fmt.Println("[HTTP] Template engine initialized (SSR mode)")
+	log.Info("HTTP", "Template engine initialized (SSR mode)", nil, nil)
 
 	s := &HTTPServer{
 		port:      port,
@@ -102,7 +102,7 @@ func NewHTTPServerDev(port int, appDir string, wsHandler *WebSocketHandler, log 
 	if err != nil {
 		return nil, fmt.Errorf("failed to load templates: %w", err)
 	}
-	fmt.Println("[HTTP] Template engine initialized (dev mode with hot reload)")
+	log.Info("HTTP", "Template engine initialized (dev mode with hot reload)", nil, nil)
 
 	s := &HTTPServer{
 		port:      port,
