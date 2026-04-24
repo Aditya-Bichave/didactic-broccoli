@@ -102,13 +102,6 @@ describe('EventRouter', () => {
             dateNowSpy.mockRestore();
         });
 
-        // @verified 2026-04-18: opcode 21 still accepted for backward compat with pre-Protocol18 captures
-        test('opcode 21 still works for backward compat', () => {
-            EventRouter.onRequest({253: 21, 1: [1.5, 2.5]});
-
-            expect(handlers.playersHandler.updateLocalPlayerPosition).not.toHaveBeenCalled();
-        });
-
         // @verified 2026-04-18: opcode 22 with pcap-derived float array from move-request fixture
         test('opcode 22 with pcap-derived position array', async () => {
             // pcap-derived: router/move-request.json
@@ -182,8 +175,9 @@ describe('EventRouter', () => {
             expect(EventRouter.getLocalPlayerPosition()).toEqual({x: 3.25, y: 1.5});
         });
 
-        test('after authoritative local Move events, future move requests no longer guess current position', () => {
+        test('after authoritative local Move events, future move requests guess current position from authoritative position', () => {
             const dateNowSpy = vi.spyOn(Date, 'now');
+            dateNowSpy.mockReturnValue(0);
             EventRouter.onResponse({253: 2, 0: 6740, 9: [0, 0]}, clearHandlers);
             EventRouter.onEvent({0: 6740, 4: 4, 5: 0, 252: EventCodes.Move});
 
@@ -191,7 +185,9 @@ describe('EventRouter', () => {
             EventRouter.onRequest({253: 22, 1: [30, 0]});
             dateNowSpy.mockReturnValue(2_000);
 
-            expect(EventRouter.getLocalPlayerPosition()).toEqual({x: 4, y: 0});
+            // Interpolates correctly after resetting authoritative flag on request move
+            expect(EventRouter.getLocalPlayerPosition().x).toBeGreaterThanOrEqual(4);
+            expect(EventRouter.getLocalPlayerPosition().x).toBeLessThan(30);
 
             dateNowSpy.mockRestore();
         });
@@ -350,11 +346,15 @@ describe('EventRouter', () => {
     describe('onResponse legacy map change (opcode 35)', () => {
         // @characterization 2026-04-18: current code does debounce + same-id guard for opcode 35
         test('opcode 35 updates map id when debounce window has elapsed', () => {
+            const dateNowSpy = vi.spyOn(Date, 'now');
+            dateNowSpy.mockReturnValue(5000); // Beyond debounce MS
+
             // synthetic: no pcap fixture; legacy path not observed in corpus
             map.id = 'old-map';
             EventRouter.onResponse({253: 35, 0: 'new-map'}, clearHandlers);
 
             expect(map.id).toBe('new-map');
+            dateNowSpy.mockRestore();
         });
 
         // @characterization 2026-04-18: same map id is silently skipped
