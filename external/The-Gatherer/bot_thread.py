@@ -1,3 +1,4 @@
+from app_logging import logger
 import threading
 from time import sleep
 import pyautogui
@@ -12,7 +13,7 @@ def get_center(rectangles):
         x = int((i[0]+(i[0]+i[2]))/2)
         y = int((i[1]+(i[1]+i[3]))/2)
         centers.append([x, y])
-        #print(centers)
+        #logger.info(centers)
     return centers
 
 
@@ -40,7 +41,7 @@ class Move:
 			#Add result to dictionary
 			dictionary[i] = distance 
 
-		#print(dictionary)
+		#logger.info(dictionary)
 		sort_dictionary = sorted(dictionary, key=dictionary.get, reverse=False)
 		closest_object = self.centers[sort_dictionary[0]]
 		return closest_object
@@ -51,33 +52,33 @@ class Move:
 		rand_pos = [[660, 500], [424, 226]]
 
 		if len(self.centers)>0:
-			print(f"Waiting {waiting_time} seconds")
+			logger.info(f"Waiting {waiting_time} seconds")
 			#Find the closest object to the player
 			closest_object = self.nearest_object(screen_center)
-			print(closest_object)
+			logger.info("Closest object: %s", closest_object)
 			
 			#Display moving position
-			print(f"Moving to: {closest_object[0]}, {closest_object[1]}")
+			logger.info(f"Moving to: {closest_object[0]}, {closest_object[1]}")
 
 			#Action 1 (Move mouse)
 			pyautogui.moveTo(closest_object[0],closest_object[1],duration=0.5)
-			print("click\n")
+			logger.info("click\n")
 			#Action 2 (Movement click)
 			pyautogui.click(button="left")
 			sleep(waiting_time)
 
 		else:
-			print(f"Waiting 2.5 seconds")
-			print("No results")
+			logger.info(f"Waiting 2.5 seconds")
+			logger.info("No results")
 			#Choose "random" position to move
 			b = random.randint(0,1)
 			
 			#Display moving position
-			print(f"Stuck, moving to: {rand_pos[b][0]}, {rand_pos[b][1]}")
+			logger.info(f"Stuck, moving to: {rand_pos[b][0]}, {rand_pos[b][1]}")
 			
 			#Action 1 (Move mouse)
 			pyautogui.moveTo(rand_pos[b][0],rand_pos[b][1],duration=0.5)
-			print("click\n")
+			logger.info("click\n")
 
 			
 			#Action 2 (Movement click)
@@ -97,7 +98,7 @@ class Move:
 	def update(self, centers, bot_status, waiting_time, screen_center):
 		self.screen_center = screen_center
 		self.waiting_time = waiting_time
-		#print(f"Bot Status Thread: {bot_status}")
+		#logger.info(f"Bot Status Thread: {bot_status}")
 		if bot_status==True:
 			self.state = 1
 		elif bot_status==False:
@@ -107,10 +108,11 @@ class Move:
 
 	def stop(self):
 		self.stopped = True
-		print("Terminating...")
+		logger.info("Terminating...")
 
 
 	def run(self):
+		logger.info("Worker start")
 		while not self.stopped:
 			if self.state == 0:
 				sleep(3)

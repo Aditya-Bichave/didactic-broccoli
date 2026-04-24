@@ -1,3 +1,4 @@
+from app_logging import logger
 import cv2
 import time
 import sys
@@ -8,11 +9,11 @@ import os
 def build_model(is_cuda, path="models/custom_yolov5.onnx"):
     net = cv2.dnn.readNet(path)
     if is_cuda:
-        print("Attempty to use CUDA")
+        logger.info("Attempty to use CUDA")
         net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
         net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA_FP16)
     else:
-        print("Running on CPU")
+        logger.info("Running on CPU")
         net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
         net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
     return net

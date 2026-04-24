@@ -1,3 +1,4 @@
+from app_logging import logger
 import customtkinter as ctk
 import tkinter
 
@@ -132,7 +133,7 @@ class DropdownFrame(ctk.CTkFrame):
         self.default = default
 
         def combobox_callback(choice):
-            #print(f"{text}:", choice)
+            #logger.info("%s: %s", text, choice)
             self.option = choice
 
 
