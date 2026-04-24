@@ -1,4 +1,5 @@
 
+from app_logging import logger
 import threading
 import time
 import pyautogui
@@ -50,7 +51,7 @@ class Bot:
     def on_harvest_finished(self, event: HarvestingFinishedEvent):
         with self._harvest_lock:
             if event.currentPossibleDegradationProcesses == 0:
-                print("Harvest finished: ", RESOURCES_MAP[event.itemId])
+                logger.info("Harvest finished: %s", RESOURCES_MAP[event.itemId])
                 self._is_harvesting = False
 
             self._last_harvest_finished_ts = time.time()
@@ -135,7 +136,7 @@ class Bot:
 
     def start(self):
         with self._bot_lock:
-            print("Starting bot")
+            logger.info("Starting bot worker thread")
             self._is_running = True
             self._thread = threading.Thread(target=self.run)
             self._thread.start()
@@ -155,7 +156,7 @@ class Bot:
         while True:
             with self._bot_lock:
                 if self._is_running == False:
-                    print("Stopping bot")
+                    logger.info("Stopping bot")
                     break
 
             if self.is_being_hurt():
@@ -182,7 +183,7 @@ class Bot:
 
             closest_resource = nearby_resources[0]
 
-            print("Closest resource: " + closest_resource.name, " Distance: ", closest_resource.distance)
+            logger.info("Closest resource: %s Distance: %s", closest_resource.name, closest_resource.distance)
 
             if closest_resource.distance < 200: 
                 found, x, y = self.search_gather_click_area(closest_resource) # NOTE: Bug here

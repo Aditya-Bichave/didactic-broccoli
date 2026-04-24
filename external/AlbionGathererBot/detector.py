@@ -2,6 +2,10 @@ import onnxruntime as onnxrt
 import numpy as np
 import cv2
 import random
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from app_logging import logger
 
 class Detector:
     def __init__(self, model_name, shape):

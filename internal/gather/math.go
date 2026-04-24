@@ -40,7 +40,7 @@ func NormalizeCalibration(cal CalibrationPayload) CalibrationPayload {
 	return cal
 }
 
-func computeCenter(cal CalibrationPayload) (int, int) {
+func computeCenter(cal CalibrationPayload) (cx, cy int) {
 	return cal.WindowRect.Left + cal.WindowRect.Width()/2 + cal.CenterOffsetX,
 		cal.WindowRect.Top + cal.WindowRect.Height()/2 + cal.CenterOffsetY
 }
@@ -105,7 +105,7 @@ func computeStepWithMode(cal CalibrationPayload, dx, dy, distance float64, mode 
 	}
 }
 
-func computeProjectedOffset(cal CalibrationPayload, mode StepMode, distance, screenDX, screenDY float64) (float64, float64) {
+func computeProjectedOffset(cal CalibrationPayload, mode StepMode, distance, screenDX, screenDY float64) (px, py float64) {
 	threshold := math.Max(float64(cal.InteractThresholdG), 1)
 
 	// Interact mode: click where the resource actually renders on screen, not
@@ -186,7 +186,7 @@ func computeMoveClickRadius(cal CalibrationPayload, distance, threshold float64)
 // clampVector scales (dx, dy) down uniformly so that (centerX+dx, centerY+dy)
 // lies within [left,right] x [top,bottom]. Preserves direction; returns (0,0) if
 // the center is already outside the rect (caller's final clamp still applies).
-func clampVector(dx, dy float64, centerX, centerY, left, right, top, bottom int) (float64, float64) {
+func clampVector(dx, dy float64, centerX, centerY, left, right, top, bottom int) (cx, cy float64) {
 	scale := 1.0
 	if dx > 0 {
 		if limit := float64(right - centerX); dx > limit && limit > 0 {

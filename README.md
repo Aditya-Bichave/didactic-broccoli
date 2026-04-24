@@ -318,3 +318,36 @@ Based on [ZQRadar](https://github.com/Zeldruck/Albion-Online-ZQRadar) by [@Zeldr
 <p align="center">
   <sub>⚠️ For educational purposes. Use at your own risk.</sub>
 </p>
+
+## Debugging and Logging
+Logging has been instrumented across the codebase to help with observability and tracking app lifecycle and state transitions.
+
+### Log Locations
+Logs are automatically created in the `logs` directory inside the project root whenever the application is run:
+```
+logs/app.log
+```
+The logs auto-rotate up to 5 files at a max size of 5 MB each.
+
+### Enabling Debug Mode
+You can enable `DEBUG` logging safely using an environment variable without modifying the codebase:
+
+**Windows CMD:**
+```cmd
+set APP_LOG_LEVEL=DEBUG
+python main.py
+```
+
+**PowerShell:**
+```powershell
+$env:APP_LOG_LEVEL="DEBUG"
+python main.py
+```
+
+**Linux/macOS:**
+```bash
+APP_LOG_LEVEL=DEBUG python main.py
+```
+
+### Privacy & Redaction
+For safety and security, raw typing input, passwords, API tokens, and full personal directory paths are intentionally redacted or not logged. Always review logs before sharing them when asking for bug support!

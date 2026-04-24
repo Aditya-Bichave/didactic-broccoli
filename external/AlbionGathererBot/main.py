@@ -1,4 +1,5 @@
 
+from app_logging import logger
 import threading
 import argparse
 from bot import Bot
@@ -59,6 +60,9 @@ models = {
 model = models["1024"]
 
 if __name__ == "__main__":
+    logger.info("Albion Gatherer Bot starting up. Version: Unspecified")
+    logger.debug("Python version: %s", sys.version)
+    logger.info("Configuration loaded.")
     parser = argparse.ArgumentParser(
                     prog='Albion Gatherer',
                     description='Bot to gather resources in Albion Online')
@@ -81,7 +85,7 @@ if __name__ == "__main__":
             else:
                 bot.start()
         elif key == kb.KeyCode.from_char('q'):
-            print("Quitting...")
+            logger.info("Quitting...")
             events_thread.stop()
             keyboard_thread.stop()
             bot.stop()

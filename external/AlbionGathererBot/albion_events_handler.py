@@ -1,3 +1,4 @@
+from app_logging import logger
 from enum import Enum
 from events.mount_event import MountEvent
 from operations.mount_start_operation import MountStartOperation
@@ -26,7 +27,7 @@ class AlbionEventsHandler:
             event_code = AlbionEvents(event_code)
             
             if event_code == AlbionEvents.NewPortalEntrance:
-                print("New portal entrance")
+                logger.info("New portal entrance")
             
             if 0 in event.parameters and event.parameters[0] == self._userId:
                 if event_code == AlbionEvents.HarvestFinished:

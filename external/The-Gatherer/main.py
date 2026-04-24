@@ -1,3 +1,4 @@
+from app_logging import logger
 import customtkinter as ctk
 from gadgets import *
 from onnx_detextion import *
@@ -17,8 +18,11 @@ ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("dark-blue")
 
 class App(ctk.CTk):
+    # Initialize GUI
+
     def __init__(self):
         super().__init__()
+        logger.info("The Gatherer 2.0 GUI initializing")
 
         self.models = filter_models(get_files_in_folder())
         self.model = "rough_stone.onnx"
@@ -47,12 +51,12 @@ class App(ctk.CTk):
 
         def update_vision_status():
             self.vision_status = self.actions_frame.get_state1()
-            print("Vision status updated to:", self.vision_status)
+            logger.info("Vision status updated to: %s", self.vision_status)
 
 
         def update_bot_status():
             self.bot_status = self.actions_frame.get_state2()
-            print("Bot status updated to:", self.bot_status)
+            logger.info("Bot status updated to: %s", self.bot_status)
                 
 
         def update_info():
@@ -61,17 +65,17 @@ class App(ctk.CTk):
             self.bot_status="off"
             self.vision_status="off"
             
-            print(self.onnx_model_box.get_option())
+            logger.info(self.onnx_model_box.get_option())
             self.model = self.onnx_model_box.get_option()
             self.net = build_model(self.is_cuda, f"models/{self.model}")          
-            print(f"Using: {self.model}")
+            logger.info(f"Using: {self.model}")
             
             self.width, self.height = self.game_size_box.get_option().split('x')
             self.wincap = WindowCapture(None, width=int(self.width), height=int(self.height))
-            print(f"Game resolution: {self.width}x{self.height}")
+            logger.info(f"Game resolution: {self.width}x{self.height}")
             
             self.waiting_time = float(self.waiting_time_frame.get_value())
-            print(f"Waiting time: {self.waiting_time}\n")
+            logger.info(f"Waiting time: {self.waiting_time}\n")
 
         
 
@@ -120,13 +124,14 @@ class App(ctk.CTk):
             
             
     def on_close(self):
-        print("Closing")
+        logger.info("Closing")
         go.stop()
         self.destroy()    
 
 
 
 if __name__ == "__main__":
+    logger.info("The Gatherer 2.0 starting up")
 
     app = App()
     app.after(100, app.update_screenshot)
