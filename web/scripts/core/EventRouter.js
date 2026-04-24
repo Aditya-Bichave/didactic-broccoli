@@ -19,7 +19,6 @@ let lpY = 0.0;
 let moveTargetX = 0.0;
 let moveTargetY = 0.0;
 let hasMoveTarget = false;
-let hasAuthoritativeLocalMove = false;
 
 // Movement interpolation state. When a new Move request fires, we snapshot the
 // current interpolated position as the origin of the new leg, stash the
@@ -78,10 +77,11 @@ function updateLocalPlayerPosition(x, y, {authoritativeMove = false} = {}) {
     const now = Date.now();
 
     if (authoritativeMove) {
-        hasAuthoritativeLocalMove = true;
-    }
-
-    if (hasMoveTarget) {
+        hasMoveTarget = false;
+        moveStartedAt = 0;
+        moveOriginX = x;
+        moveOriginY = y;
+    } else if (hasMoveTarget) {
         const remainingDistance = Math.hypot(moveTargetX - x, moveTargetY - y);
         if (remainingDistance <= 0.35) {
             hasMoveTarget = false;
@@ -111,7 +111,7 @@ function isLocalPlayerEntity(id) {
 // the character is heading — not where it is — leading to bad distance
 // estimates for gather click projection.
 function computeInterpolatedPosition(now = Date.now()) {
-    if (hasAuthoritativeLocalMove || !hasMoveTarget || moveStartedAt === 0) {
+    if (!hasMoveTarget || moveStartedAt === 0) {
         return {x: lpX, y: lpY};
     }
     const dx = moveTargetX - moveOriginX;
@@ -589,7 +589,6 @@ export function reset() {
     moveTargetX = 0.0;
     moveTargetY = 0.0;
     hasMoveTarget = false;
-    hasAuthoritativeLocalMove = false;
     window.lpX = 0;
     window.lpY = 0;
     moveOriginX = 0.0;

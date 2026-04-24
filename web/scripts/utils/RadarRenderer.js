@@ -2,6 +2,7 @@ import {CanvasManager} from './CanvasManager.js';
 import {CATEGORIES} from "../constants/LoggerConstants.js";
 import settingsSync from "./SettingsSync.js";
 import zonesDatabase from "../data/ZonesDatabase.js";
+import {getLocalPlayerPosition} from "../core/EventRouter.js";
 
 export class RadarRenderer {
     constructor(dependencies) {
@@ -102,6 +103,10 @@ export class RadarRenderer {
         const currentTime = performance.now();
         const deltaTime = currentTime - this.previousTime;
         const t = Math.min(1, deltaTime / 100);
+
+        const pos = getLocalPlayerPosition();
+        this.lpX = pos.x;
+        this.lpY = pos.y;
 
         if (settingsSync.getBool('settingShowMap', true) && this.drawings.mapsDrawing) {
             this.drawings.mapsDrawing.interpolate(this.map, this.lpX, this.lpY, t);
