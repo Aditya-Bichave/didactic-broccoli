@@ -250,6 +250,21 @@ describe('HarvestablesHandler', () => {
             expect(e.posX).toBe(-111.5);
             expect(e.posY).toBe(222.5);
         });
+
+        test('synthetic: missing static filter settings default to allowing valid harvestables', () => {
+            settingsSync.getJSON.mockReturnValue(null);
+
+            const p = {
+                0: 1004, 5: 14, 6: -1, 7: 4,
+                8: [-111.5, 222.5], 10: 2, 11: 1
+            };
+
+            handler.newHarvestableObject(p[0], p);
+
+            const list = handler.getHarvestableList();
+            expect(list).toHaveLength(1);
+            expect(list[0].stringType).toBe('Fiber');
+        });
     });
 
     describe('newHarvestableObject tier divergence (event 40)', () => {

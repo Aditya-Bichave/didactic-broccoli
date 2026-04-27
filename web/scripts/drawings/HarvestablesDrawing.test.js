@@ -13,6 +13,10 @@ const {HarvestablesDrawing} = await import('./HarvestablesDrawing.js');
 describe('HarvestablesDrawing', () => {
     beforeEach(() => {
         window.logger = {debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn()};
+        window.harvestablesHandler = {
+            shouldDisplayHarvestable: vi.fn(() => true)
+        };
+        delete window.handlers;
     });
 
     test('renders living harvestables even when they spawn with size zero', () => {
@@ -56,6 +60,31 @@ describe('HarvestablesDrawing', () => {
             hY: 8
         }]);
 
+        expect(drawing.DrawCustomImage).not.toHaveBeenCalled();
+    });
+
+    test('hides harvestables when the live resource filter disables them', () => {
+        const drawing = new HarvestablesDrawing();
+        const ctx = {};
+
+        drawing.DrawCustomImage = vi.fn();
+        drawing.transformPoint = vi.fn(() => ({x: 120, y: 80}));
+
+        window.harvestablesHandler.shouldDisplayHarvestable.mockReturnValue(false);
+
+        drawing.invalidate(ctx, [{
+            id: 8403,
+            type: 14,
+            tier: 4,
+            charges: 0,
+            size: 6,
+            stringType: 'Fiber',
+            mobileTypeId: -1,
+            hX: 12,
+            hY: 8
+        }]);
+
+        expect(window.harvestablesHandler.shouldDisplayHarvestable).toHaveBeenCalledWith('Fiber', false, 4, 0);
         expect(drawing.DrawCustomImage).not.toHaveBeenCalled();
     });
 });

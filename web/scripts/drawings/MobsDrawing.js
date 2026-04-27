@@ -5,6 +5,10 @@ import settingsSync from "../utils/SettingsSync.js";
 
 export class MobsDrawing extends DrawingUtils
 {
+    getMobsHandler() {
+        return window.mobsHandler || window.handlers?.mobsHandler || null;
+    }
+
     interpolate(mobs, mists, lpX, lpY, t)
     {
         for (const mobOne of mobs)
@@ -24,6 +28,21 @@ export class MobsDrawing extends DrawingUtils
 
         for (const mobOne of mobs)
         {
+            const isLivingResourceType =
+                mobOne.type == EnemyType.LivingSkinnable || mobOne.type == EnemyType.LivingHarvestable;
+            const mobsHandler = this.getMobsHandler();
+
+            if (isLivingResourceType) {
+                const shouldDisplay = mobsHandler?.shouldDisplayLivingResource?.(
+                    mobOne.name,
+                    mobOne.tier,
+                    mobOne.enchantmentLevel
+                );
+                if (shouldDisplay === false) {
+                    continue;
+                }
+            }
+
             const point = this.transformPoint(mobOne.hX, mobOne.hY);
 
             let imageName = undefined;
@@ -34,7 +53,7 @@ export class MobsDrawing extends DrawingUtils
             let drawId = settingsSync.getBool("settingEnemiesID");
             let isLivingResource = false;
 
-            if (mobOne.type == EnemyType.LivingSkinnable || mobOne.type == EnemyType.LivingHarvestable)
+            if (isLivingResourceType)
             {
                 isLivingResource = true;
                 // Only set imageName if mob has been identified (has name from mobinfo or cross-ref)

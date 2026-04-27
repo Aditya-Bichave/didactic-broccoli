@@ -22,6 +22,16 @@ const RESOURCE_NAME_TO_PREFIX = {
     stone: 'rsp'
 };
 
+export function createDefaultResourceEnchantSettings() {
+    return {
+        e0: Array(8).fill(true),
+        e1: Array(8).fill(true),
+        e2: Array(8).fill(true),
+        e3: Array(8).fill(true),
+        e4: Array(8).fill(true)
+    };
+}
+
 export function selectAllTierEnchants(resourcePrefix, tierIndex) {
     const enchantLevels = ['e0', 'e1', 'e2', 'e3', 'e4'];
     const checkboxes = [];

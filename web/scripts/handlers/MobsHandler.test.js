@@ -151,7 +151,19 @@ describe('MobsHandler', () => {
             const mobs = handler.getMobList();
             expect(mobs).toHaveLength(1);
             expect(mobs[0].name).toBe('Log');
-            expect(settingsSync.getJSON).toHaveBeenCalledWith('settingLivingWoodEnchants');
+            expect(settingsSync.getJSON).toHaveBeenCalledWith('settingLivingWoodEnchants', null);
+        });
+
+        test('synthetic: missing living-resource filter settings default to allowing the mob', () => {
+            settingsSync.getJSON.mockReturnValue(null);
+
+            const p = normalizeParams({'0': 8011, '1': 529, '2': 255, '7': [0, 0], '13': 856, '33': 0});
+            handler.NewMobEvent(p);
+
+            const mobs = handler.getMobList();
+            expect(mobs).toHaveLength(1);
+            expect(mobs[0].type).toBe(EnemyType.LivingHarvestable);
+            expect(mobs[0].name).toBe('Fiber');
         });
 
         // @verified 2026-04-18: hostile camp mob typeId=2067 (T5_MOB_ROAMING_KEEPER_CAMP_UNPROVEN_MALE).

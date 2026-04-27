@@ -10,6 +10,7 @@ export class WebSocketEventQueue {
         this.flushScheduled = false;
         this.flushCallback = null;
         this.rafId = null;  // Track RAF for cleanup
+        this.timeoutId = null;
         this.cleanupInterval = setInterval(() => this.cleanupThrottleMap(), 30000);
     }
 
@@ -77,6 +78,14 @@ export class WebSocketEventQueue {
     scheduleFlush() {
         if (this.flushScheduled) return;
         this.flushScheduled = true;
+        if (document.hidden === true && window.pipManager?.isActive === true) {
+            this.timeoutId = setTimeout(() => {
+                this.timeoutId = null;
+                this.flush();
+            }, 16);
+            return;
+        }
+
         this.rafId = requestAnimationFrame(() => this.flush());
     }
 
@@ -106,6 +115,10 @@ export class WebSocketEventQueue {
         if (this.rafId !== null) {
             cancelAnimationFrame(this.rafId);
             this.rafId = null;
+        }
+        if (this.timeoutId !== null) {
+            clearTimeout(this.timeoutId);
+            this.timeoutId = null;
         }
         this.flushScheduled = false;
 

@@ -29,21 +29,71 @@ jobs:
       - name: Lint Frontend
         run: npm run lint
 
-  test:
+  test-go:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
 
+      - name: Setup dependencies
+        run: sudo apt-get install -y libpcap-dev
+
       - name: Test Go
         run: go test ./...
+
+      - name: Test Race
+        run: go test -race ./...
+
+      - name: Test PCAP Regression
+        run: cd internal/photon && go test -run TestParserRegression -v
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup
+
+      - name: Install NPM dependencies
+        run: npm ci
 
       - name: Test Frontend
         run: npm test
 
+  test-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup
+
+      - name: Setup dependencies
+        run: sudo apt-get install -y libpcap-dev
+
+      - name: Install E2E Node deps
+        run: cd e2e && npm install puppeteer
+
+      - name: Install Puppeteer Browsers
+        run: cd e2e && npx puppeteer browsers install chrome
+
+      - name: Run E2E Test
+        run: cd e2e && go test -v
+
+  test-windows:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup
+
+      # Skipping pcap tests on Windows CI to keep it focused on gather API logic.
+      # Or just test internal/gather
+      - name: Test Windows Gather Platform
+        run: go test -v ./internal/gather/...
+
   lint-and-test:
-    needs: [lint, test]
+    needs: [lint, test-go, test-frontend, test-e2e, test-windows]
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:

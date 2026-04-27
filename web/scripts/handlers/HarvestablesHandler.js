@@ -1,6 +1,6 @@
 import {CATEGORIES} from "../constants/LoggerConstants.js";
 import settingsSync from "../utils/SettingsSync.js";
-import {getResourceStorageKeyForName} from "../utils/ResourcesHelper.js";
+import {createDefaultResourceEnchantSettings, getResourceStorageKeyForName} from "../utils/ResourcesHelper.js";
 
 const HarvestableType =
 {
@@ -152,7 +152,8 @@ export class HarvestablesHandler
             return false;
         }
 
-        return settingsSync.getJSON(settingKey)?.[`e${charges}`][tier - 1] === true;
+        const resourceSettings = settingsSync.getJSON(settingKey, null) ?? createDefaultResourceEnchantSettings();
+        return resourceSettings?.[`e${charges}`]?.[tier - 1] === true;
     }
 
 
