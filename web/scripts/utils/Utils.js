@@ -18,8 +18,8 @@ import {DungeonsHandler} from '../handlers/DungeonsHandler.js';
 import {DrawingUtils} from './DrawingUtils.js';
 import {CATEGORIES} from '../constants/LoggerConstants.js';
 import {createRadarRenderer} from './RadarRenderer.js';
-import {destroyEventQueue, getEventQueue} from './WebSocketEventQueue.js';
 import pictureInPictureManager from './PictureInPictureManager.js';
+import {destroyEventQueue, getEventQueue} from './WebSocketEventQueue.js';
 
 import * as WebSocketManager from '../core/WebSocketManager.js';
 import * as DatabaseLoader from '../core/DatabaseLoader.js';
