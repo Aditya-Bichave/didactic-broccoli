@@ -45,7 +45,7 @@
     "happy-dom": "^20.9.0",
     "htmx.org": "^2.0.8",
     "lucide": "^1.8.0",
-    "puppeteer": "^24.31.0",
+    "puppeteer": "^24.42.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "puppeteer-real-browser": "^1.4.4",
